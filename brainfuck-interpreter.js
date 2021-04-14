@@ -1,5 +1,5 @@
 
-function * bf(_code, _pause, _getChar) {
+function * bf_text(_code, _pause, _getChar) {
 	const code = String(_code || '').split('')
 	const getChar = _getChar || ( () => prompt('enter a char:') )
 	const memory = [0]
