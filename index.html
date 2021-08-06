@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang='en'>
+<head>
+	<meta charset='utf-8'/>
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+
+	<title>Document</title>
+</head>
+<body>
+
+	<script src='./brainfuck-interpreter.js'></script>
+	<script src='./brainfuck-depreter.js'></script>
+	<script>
+
+		console.log( // show the result on the console.
+			bf_text(
+				'++++++[>++++++++++<-]>+++++.!', // code.
+				false, // pause before and after fiding a char.
+				undefined, // execute on fiding ",".
+				2 // maximum number of vectors.
+			).next().value // result is equal to "A".
+		)
+
+	</script>
+
+</body>
+</html>

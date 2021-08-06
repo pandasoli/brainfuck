@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang='en'>
+<head>
+	<meta charset='utf-8'/>
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+
+	<title>Document</title>
+</head>
+<body>
+	<script src='./brainfuck-interpreter.js'></script>
+	<script src='./brainfuck-depreter.js'></script>
+
+    <script>
+    	const query = {}
+
+    	window.location.search.substring(1).split('&').map(_item => {
+    		const info = _item.split('=')
+    		query[info[0]] = decodeURI( info[1] )
+    	})
+
+		try {
+			if (query.to == 'text') {
+				const interpreter = bf_text(
+					query.bf || '++++++[>++++++++++<-]>+++++.<++++[>++++++++++<-]>+++.+++.-.---------.!',
+					false,
+					() => 'a'
+				)
+				document.write( JSON.stringify( interpreter.next().value ) )
+			}
+			else if (query.to == 'bf') {
+				const depreter = text_bf(
+					query.text || 'Alone',
+					false
+				)
+				document.write( JSON.stringify( depreter.next().value ) )
+			}
+			else {
+				throw 'Not found'
+			}
+		}
+		catch (_err) {
+			document.write( _err )
+		}
+
+    </script>
+</body>
+</html>
