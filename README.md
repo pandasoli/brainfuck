@@ -9,13 +9,14 @@ Como usar:
 <br/>
 
 Exemplo:
-
-    >  const interpreter = bf_text(
-           '++++++[>++++++++++<-]>+++++.',
-           false
-           () => prompt('Enter a char: ')
-       )
-    <• undefined
+```javascript
+const interpreter = bf_text(
+  '++++++[>++++++++++<-]>+++++.',
+  false
+  () => prompt('Enter a char: ')
+)
+```
+> undefined
 
 Nenhum dos parâmetros são obrigatórios
 
@@ -25,8 +26,10 @@ Se a pausa for true o função irá parar em cada carácter aceito
 encontrado e ao fim de seu processamento, para continuar e ir
 para o proximo carácter, basta:
 
-    >  interpreter.next()
-    <• >{value: {…}, done: false}
+```javascript
+interpreter.next()
+```
+> {value: {…}, done: false}
 
 Caso contrario o programa continuará normalmente após um .next()
 até o fim da interpretação.
@@ -46,12 +49,13 @@ trabalha com uma contia limitada de vetores. Como usar:
 <br/>
 
 Exemplo:
-
-    >  const interpreter = text_bf(
-           'A',
-           false
-       )
-    <• >text_bf {<suspended>}
+```javascript
+const interpreter = text_bf(
+  'A',
+  false
+)
+```
+> text_bf {<suspended>}
 
 Nenhum dos parâmetros são obrigatórios
 
@@ -60,8 +64,10 @@ Nenhum dos parâmetros são obrigatórios
 Se a pausa for true o função irá parar em cada carácter encontrado,
 para continuar e ir para o proximo carácter, basta:
 
-    >  interpreter.next()
-    <• >{value: {…}, done: false}
+```javascript
+interpreter.next()
+```
+> {value: {…}, done: false}
 
 Caso contrario o programa continuará normalmente após um .next()
 até o fim da interpretação.
