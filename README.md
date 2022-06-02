@@ -1,11 +1,11 @@
-# Documentação
-
 ## brainfuck-interpreter.js
 Ele contem a função de interpretar o brainfuck para algo legível.
 Como usar:
 
 ### instanciação
-### &emsp;&emsp; bf_text(_code, _pause, _getChar)
+```javascript
+bf_text(_code, _pause, _getChar)
+```
 <br/>
 
 Exemplo:
