@@ -1,77 +1,45 @@
-## brainfuck-interpreter.js
-Ele contem a função de interpretar o brainfuck para algo legível.
-Como usar:
+<div align='center'>
 
-### instanciação
-```javascript
-bf_text(_code, _pause, _getChar)
-```
-<br/>
+# Interpreter
+Ele contem a função de interpretar o brainfuck para algo legível.
 
 Exemplo:
-```javascript
-const interpreter = bf_text(
-  '++++++[>++++++++++<-]>+++++.',
-  false
-  () => prompt('Enter a char: ')
-)
-```
-> undefined
+<div align='left'>
 
-Nenhum dos parâmetros são obrigatórios
+  ```javascript
+  const interpreter = bf_text(
+    '++++++[>++++++++++<-]>+++++.', // Code
+    false, // Pause on each character
+    () => prompt('Enter a char: ') // On ","
+  )
+  ```
+</div>
 
-### modo de uso
-<br/>
-Se a pausa for true o função irá parar em cada carácter aceito
-encontrado e ao fim de seu processamento, para continuar e ir
-para o proximo carácter, basta:
+Nenhum dos parâmetros são obrigatórios.
 
-```javascript
-interpreter.next()
-```
-> {value: {…}, done: false}
-
-Caso contrario o programa continuará normalmente após um .next()
-até o fim da interpretação.
+## Modo de uso
+Se a pausa for true o função irá parar em cada carácter aceito encontrado. Caso contrario o programa continuará normalmente após um.next() até o fim da interpretação.
 
 Os dados da interpretação são dados a cada .next() eles se
 encontram na chave value ela contem a memoria, o ponteiro e
 o resultado até agora.
 
-## brainfuck-depreter.js
+# Depreter
 Este contem a função de converter textos para brainfuck, ele
 pode gerar códigos bastante grandes pois trabalha apenas com
 dois vetores de memoria, pois a grande parte dos interpretadores
-trabalha com uma contia limitada de vetores. Como usar:
-
-### instanciação
-### &emsp;&emsp; text_bf(_text, _pause)
-<br/>
+trabalha com uma contia limitada de vetores.
 
 Exemplo:
-```javascript
-const interpreter = text_bf(
-  'A',
-  false
-)
-```
-> text_bf {<suspended>}
+<div align='left'>
 
-Nenhum dos parâmetros são obrigatórios
+  ```javascript
+  const interpreter = text_bf(
+    'A', // Text
+    false // Pause on each character
+  )
+  ```
+</div>
 
-### modo de uso
-<br/>
-Se a pausa for true o função irá parar em cada carácter encontrado,
-para continuar e ir para o proximo carácter, basta:
-
-```javascript
-interpreter.next()
-```
-> {value: {…}, done: false}
-
-Caso contrario o programa continuará normalmente após um .next()
-até o fim da interpretação.
-
-Os dados da interpretação são dados a cada .next() eles se
-encontram na chave value ela contem a memoria e o resultado
-até agora.
+Nenhum dos parâmetros são obrigatórios.
+</div>
