@@ -1,5 +1,5 @@
 
-function * text_bf(_text, _pause) {
+function * bfdepreter(_text, _pause) {
   const props = {
     text: String(_text || 'Panda').split(''),
     pause: Boolean(_pause)
