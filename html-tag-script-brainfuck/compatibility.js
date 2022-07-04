@@ -8,7 +8,7 @@ document.querySelectorAll("script[type='text/brainfuck']").forEach(_tag => {
     div = _tag.previousSibling
   }
 
-  div.innerText = bf_text( _tag.innerText ).next().value.result
+  div.innerText = bfinterpreter( _tag.innerText ).next().value.result
 
   if ( !isSibling ) {
     _tag.parentElement.insertBefore( div, _tag )
