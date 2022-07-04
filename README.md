@@ -7,7 +7,7 @@ Exemplo:
 <div align='left'>
 
   ```javascript
-  const interpreter = bf_text(
+  const interpreter = bfinterpreter(
     '++++++[>++++++++++<-]>+++++.', // Code
     false, // Pause on each character
     () => prompt('Enter a char: ') // On ","
@@ -34,7 +34,7 @@ Exemplo:
 <div align='left'>
 
   ```javascript
-  const interpreter = text_bf(
+  const interpreter = bfdepreter(
     'A', // Text
     false // Pause on each character
   )
