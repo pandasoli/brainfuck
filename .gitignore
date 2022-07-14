@@ -1,2 +1,5 @@
-# test
-/test.js
+# dependencies
+/node_modules
+
+# packaging
+yarn*
