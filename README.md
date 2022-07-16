@@ -59,7 +59,6 @@ Ele contem a função de interpretar o brainfuck para algo legível.
 A função recebe paramtetros de teste por padrão, não sendo necessarío que você os passe.
 
 ### Modo de uso
-
 Se o parâmetro "_pause" ser "none" a função não irá pausar quando encontrar um caracter.  
 Se for "before", vai parar antes de processar este caracter.  
 Se for "after" depois de processar.  
