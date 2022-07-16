@@ -8,7 +8,7 @@
 # Interpreter
 Ele contem a função de interpretar o brainfuck para algo legível.
 
-<div align='left' style='max-width: 700px;'>
+<div align='left'>
 
   ```js
   const interpreter = bfinterpreter(
@@ -19,8 +19,8 @@ Ele contem a função de interpretar o brainfuck para algo legível.
   ```
 </div>
 
-## Parametros
-<div align='left' style='max-width: 700px;'>
+### Parametros
+<div align='left'>
 
 ```ts
   type Props = {
@@ -55,10 +55,10 @@ Ele contem a função de interpretar o brainfuck para algo legível.
 ```
 </div>
 
-## Nenhum dos parâmetros são obrigatórios!
+### Nenhum dos parâmetros são obrigatórios!
 A função recebe paramtetros de teste por padrão, não sendo necessarío que você os passe.
 
-## Modo de uso
+### Modo de uso
 
 Se o parâmetro "_pause" ser "none" a função não irá pausar quando encontrar um caracter.  
 Se for "before", vai parar antes de processar este caracter.  
@@ -77,7 +77,7 @@ dois vetores de memoria, pois a grande parte dos interpretadores
 trabalha com uma contia limitada de vetores.
 
 Exemplo:
-<div align='left' style='max-width: 600px;'>
+<div align='left'>
 
   ```js
   const interpreter = bfdepreter(
