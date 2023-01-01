@@ -1,0 +1,14 @@
+{
+  "name": "Brainfuck",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:pandasoli/Brainfuck.git",
+  "author": "pandasoli <sadpandasoli@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "jest": "^28.1.3"
+  }
+}
