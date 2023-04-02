@@ -31,4 +31,3 @@ module.exports = function * bfinterpreter(code = '', config = {}, pause = true) 
 
   return { mem, ptr, idx, res, loops }
 }
-
