@@ -1,55 +1,21 @@
-<div align='center'>
+To know how to use read the type annotations.
+
+<br/>
 
 # Interpreter
-Ele contem a função de interpretar o brainfuck para algo "legível".
+The smallest interpreter is inside [`interpreter.js`](./interpreter.js).
 
-<div align='left'>
+But there is also [`complete-interpreter.js`](./complete-interpreter.js) that has more features for implementing it on the web.
+- Yields the result of each char before interpreting it
+- Receives a object with the last result to start from
 
-  ```js
-  const interpreter = bfinterpreter(
-    '++++++[>++++++++++<-]>+++++.', // Código
-    {},                             // Configurações
-    false                           // Puasar quando achar um caractér valido
-  )
-  ```
-</div>
-
-### Parâmetros
-Nenhum deles é obrigatório!
-
-`code`: é onde seu código brainfuck é passado
-`config`: aquí você pode colocar as configurações iniciais. assim:
-
-<div align='left'>
-
-  ```js
-    bfinterpreter('+-.>', {
-      mem: [0],     // Como a memoria vai iniciar
-      ptr: 0,       // Qual local da memoria o ponteiro vai iniciar (começa em 0)
-      idx: 0,       // Qual letra do código iniciar
-      prompt: promt('Enter a char:'), // Qual função chamar ao encontrar ","
-      loops: []     // Guardar inicio de loops
-    })
-  ```
-</div>
-`pause`: pausa a função a cada character valido encontrado
-
-Não é aconcelhavel usar o parâmetro `config` caso você não esteja setando um estado anteriormente salvo.
+<br/>
 
 # Depreter
-Este contem a função de converter textos para brainfuck.
-ele pode gerar códigos bastante grandes pois trabalha apenas com
-dois vetores de memoria, pois a grande parte dos interpretadores
-trabalha com uma contia limitada de vetores.
+It is inside [`depreter.js`](./depreter.js).  
+It translates text to Brainfuck.
 
-Exemplo:
-<div align='left'>
+<br/>
 
-  ```js
-  const interpreter = bfdepreter(
-    'A',  // Texto
-    false // Pausar em cada caracter
-  )
-  ```
-</div>
-
+# Compiler
+Soon!
