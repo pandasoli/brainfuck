@@ -33,5 +33,9 @@ node compiler.js > prog.s
 
 <br/>
 
+NOTE: different from [#interpreter](#interpreter) this works with [ASCII](https://ascii-code.com) (0-127), not UTF-16 ([`fromCharCode`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCharCode)). Each cell is one byte!
+
+<br/>
+
 ## Transpreter to GNU Cobol
 Soon.
