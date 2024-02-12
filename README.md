@@ -1,4 +1,8 @@
 ### Interpreter 🐍
+> Inspired by: [Brainfuck/brainfuck-visualizer-master](https://ashupk.github.io/Brainfuck/brainfuck-visualizer-master/index.html)
+
+<br/>
+
 There is the smallest interpreter [`interpreters/smallest.js`](interpreters/smallest.js).
 
 And the [`interpreters/complete.js`](interpreters/complete.js) with more features for web use cases.
@@ -37,7 +41,8 @@ node main.js > prog.s
 <br/>
 
 ### JIT Compiler 😂
-> [`compilers/jit`](compilers/jit)
+> [`compilers/jit`](compilers/jit)  
+> Inspired by: [tsoding/bfjit](https://github.com/tsoding/bfjit)
 
 <br/>
 
