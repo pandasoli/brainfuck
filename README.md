@@ -11,6 +11,15 @@ And the [`interpreters/complete.js`](interpreters/complete.js) with more feature
 
 <br/>
 
+```js
+const bf = bfinterpreter('++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.!', { pause: true })
+
+while (!(a = bf.next()).done)
+	console.log(a.value)
+```
+
+<br/>
+
 ### Depreter 🔤
 > [`depreter.js`](depreter.js)
 
