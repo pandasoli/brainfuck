@@ -27,7 +27,7 @@ It translates text to Brainfuck.
 
 ### Depreter v2 ⛱️
 > [`depreterv2.js`](depreterv2.js)  
-> Same configuration as [#interpreter 🐍](#interpreter-%F0%9F%90%8D)
+> Same configuration as [#interpreter 🐍](#interpreter-)
 
 A really smart depreter that writes code with the same techniques
 I myself use when I manually writing **Brainf#ck**.
