@@ -45,7 +45,8 @@ export function * bfinterpreter(code = '', config = {}) {
 		}
 	}
 
-  for (var ip = config.ip ?? 0; ip < code.length; ip++) {
+	let ip = config.ip ?? 0
+  for (; ip < code.length; ip++) {
 		const ch = code[ip]
 		if (config.pause && '+-><.,![]'.includes(ch)) yield { mem, ptr, ip, res }
 
