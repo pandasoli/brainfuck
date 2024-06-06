@@ -165,36 +165,58 @@ export function * bfdepreterv2(text, config = {}) {
 		}
 
 		// Make code
+		const o_mem = [...mem]
 		const o_ptr = ptr
+
 		let code = movePtr(i) + sign.repeat(diff)
-		let has_update_code = false
+		let code_mem = [...mem]
+		let code_ptr = ptr
+
+		// Update memory state
+		//   Use `128` to consider 0 on a byte-overflow
+		code_mem[i] = code_mem[i] + (sign === '+' ? diff : -diff)
+		if (code_mem[i] > 127) code_mem[i] -= 128
+		if (code_mem[i] < 0) code_mem[i] = 128 + code_mem[i]
+
+		let foo
+		mem = o_mem; ptr = o_ptr
 
 		// Test if the code would be smaller if created new cell
 		if (!mem.includes(0) && (max_mem === 0 || mem.length < max_mem)) {
 			mem.push(0)
 
-			const oo_mem = [...mem]
-			const oo_ptr = ptr
-			ptr = o_ptr
-
-			const foo = single(number)
-
+			foo = single(number)
 			if (foo.length < code.length) {
 				code = foo
-				has_update_code = true
+				code_mem = [...mem]
+				code_ptr = ptr
 			}
-			else {
-				mem = oo_mem; ptr = oo_ptr
-			}
+			mem = o_mem; ptr = o_ptr
 		}
 
-		if (!has_update_code) {
-			// Update memory state
-			//   Use `128` to consider 0 on a byte-overflow
-			mem[i] = mem[i] + (sign === '+' ? diff : -diff)
-			if (mem[i] > 127) mem[i] -= 128
-			if (mem[i] < 0) mem[i] = 128 + mem[i]
+		// Test if `<[-]+++++++`-like would be smaller
+		// NOTE: Possibly not the fastest to interpretate
+		foo = `${movePtr(i)}[-]${'+'.repeat(number)}`
+		if (foo.length < code.length) {
+			code = foo
+			code_mem[i] = number
+			code_ptr = i
 		}
+		mem = o_mem; ptr = o_ptr
+
+		// Test if `<[+]-------`-like would be smaller
+		// NOTE: Possibly not the fastest to interpretate
+		foo = `${movePtr(i)}[+]${'-'.repeat(128 - number)}`
+		if (foo.length < code.length) {
+			code = foo
+			code_mem[i] = number
+			code_ptr = i
+		}
+		mem = o_mem; ptr = o_ptr
+
+		// Update memory state
+		mem = code_mem
+		ptr = code_ptr
 
 		return code
 	}
