@@ -38,7 +38,7 @@ export function * bfinterpreter(code = '', config = {}) {
 
 	const find_start = pos => {
 		let closed = 1
-		for (pos--; pos > 0; pos--) {
+		for (pos--; pos >= 0; pos--) {
 			if      (code[pos] == '[') closed--
 			else if (code[pos] == ']') closed++
 			if (closed == 0) return pos
