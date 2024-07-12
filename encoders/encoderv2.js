@@ -134,7 +134,7 @@ export function * bfencoderv2(text, config = {}) {
 
 		// Update memory
 		mem[i] +=            sign === '+' ? diff : -diff
-		mem[i] += isPrime ? (sign === '+' ? -1 : 1) : 0
+		mem[i] += isPrime ? (sign === '-' ? -1 : 1) : 0
 		mem[counter_i] = 0
 		if (mem[i] > 127) mem[i] -= 128
 		if (mem[i] < 0)   mem[i] = 128 + mem[i]
