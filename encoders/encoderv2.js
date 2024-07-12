@@ -66,6 +66,16 @@ function addOrSub(mem, number) {
 }
 
 /**
+ * @param {number} number
+ * @return [{number}, {string}, {number}]
+ */
+function closerTen(number) {
+	const last = number % 10
+	const res = number - last
+	return [res, '+', last]
+}
+
+/**
  * @param {string} text - Raw text
  * @param {BfDepv2Config} config - Configuration to start interpretation from & dependencies
  * @returns {BfDepv2Result}
@@ -114,6 +124,9 @@ export function * bfencoderv2(text, config = {}) {
 		}
 
 		// Write the result
+		const o_mem = [...mem]
+		const o_ptr = ptr
+
 		const counter_code = single(bestPair[0])
 		const counter_i = ptr
 
@@ -132,6 +145,25 @@ export function * bfencoderv2(text, config = {}) {
 			${isPrime ? sign : ''}
 		`.replace(/\s+/g, '')
 
+		const code_ptr = ptr
+
+		locked_cells = locked_cells.filter(e => e !== i)
+
+		// Try variants
+		mem = o_mem; ptr = o_ptr
+
+		if (number % 10 !== 0) {
+			const [num, sign, reminder] = closerTen(number)
+			const foo = loop(num) + sign.repeat(reminder)
+
+			if (foo.length < code.length) {
+				mem[ptr] += sign === '+' ? reminder : -reminder
+				return foo
+			}
+
+			mem = o_mem; ptr = o_ptr
+		}
+
 		// Update memory
 		mem[i] +=            sign === '+' ? diff : -diff
 		mem[i] += isPrime ? (sign === '-' ? -1 : 1) : 0
@@ -139,7 +171,8 @@ export function * bfencoderv2(text, config = {}) {
 		if (mem[i] > 127) mem[i] -= 128
 		if (mem[i] < 0)   mem[i] = 128 + mem[i]
 
-		locked_cells = locked_cells.filter(e => e !== i)
+		ptr = code_ptr
+
 		return code
 	}
 
