@@ -18,18 +18,18 @@ while (!(a = bf.next()).done)
 
 <br>
 
-### Depreter 🔤
-> [`depreter.js`](depreter.js)
+### Encoder 🔤
+> [`encoders/encoder.js`](encoders/encoder.js)
 
 It translates text to Brainfuck.
 
 <br>
 
-### Depreter v2 ⛱️
-> [`depreterv2.js`](depreterv2.js)  
+### Encoder v2 ⛱️
+> [`encoders/encoderv2.js`](encoders/encoderv2.js)  
 > Same configuration as [#interpreter 🐍](#interpreter-)
 
-A really smart depreter that writes code with the same techniques
+A really smart encoder that writes code with the same techniques
 I myself use when I manually writing **Brainf#ck**.
 
 It chooses the smallest result from many techniques to get to the number
@@ -47,9 +47,12 @@ It uses:
 	- We choose the smallest factors of the number
 
 > [!NOTE]
-> TODOS:
-> - Support loops inside loops
-> - Support loop counter to contain a loop
+> Limitations:
+> - No support for loops inside loops
+> - No support for loop counter to contain a loop
+>
+> They aren't really needed as all the techniques  
+> already make the code as small as possible.
 
 <br>
 

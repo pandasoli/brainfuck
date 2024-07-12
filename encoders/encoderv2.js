@@ -70,7 +70,7 @@ function addOrSub(mem, number) {
  * @param {BfDepv2Config} config - Configuration to start interpretation from & dependencies
  * @returns {BfDepv2Result}
  */
-export function * bfdepreterv2(text, config = {}) {
+export function * bfencoderv2(text, config = {}) {
 	let mem = config.mem ?? [0]
 	let ptr = config.ptr ?? 0
 	let res = config.res ?? ''
