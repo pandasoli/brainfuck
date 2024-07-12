@@ -98,6 +98,9 @@ export function * bfdepreterv2(text, config = {}) {
 			return foo[1] < old[1] ? [...foo, i] : old
 		}, [null, 128])
 
+		if (diff === 0)
+			return null
+
 		locked_cells.push(i)
 
 		// Get the smallest factors of the ascii
@@ -105,8 +108,8 @@ export function * bfdepreterv2(text, config = {}) {
 		let bestPair = closestFactors(diff)
 		let isPrime = false
 
-		if (bestPair[0] === 1) {
-			bestPair = closestFactors(++diff)
+		if (bestPair.includes(1)) {
+			bestPair = closestFactors(--diff)
 			isPrime = true
 		}
 
@@ -119,15 +122,14 @@ export function * bfdepreterv2(text, config = {}) {
 			return null
 		}
 
-		console.log(bestPair, diff)
-		const code_reminder = isPrime ? (sign === '+' ? '-' : '+') : ''
 		const code = `
 			${counter_code}
 			[
 				${movePtr(i)}         ${sign.repeat(bestPair[1])}
 				${movePtr(counter_i)} -
 			]
-			${movePtr(i)} ${code_reminder}
+			${movePtr(i)}
+			${isPrime ? sign : ''}
 		`.replace(/\s+/g, '')
 
 		// Update memory
