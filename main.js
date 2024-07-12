@@ -13,5 +13,6 @@ try {
 		txt_val = a.value
 	txt_val = a.value
 }
-catch {}
+catch (e) { console.error(e) }
+
 console.log(txt_val)

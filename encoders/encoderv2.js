@@ -70,10 +70,13 @@ function addOrSub(mem, number) {
  * @return [{number}, {string}, {number}]
  */
 function closerTen(number) {
-	const last = number % 10
-	const res = number - last
-	return [res, '+', last]
+	const unit = number % 10
+	const res = number - unit
+	return [res, '+', unit]
 }
+
+const obj = obj => JSON.parse(obj)
+const str = obj => JSON.stringify(obj)
 
 /**
  * @param {string} text - Raw text
@@ -84,37 +87,40 @@ export function * bfencoderv2(text, config = {}) {
 	let mem = config.mem ?? [0]
 	let ptr = config.ptr ?? 0
 	let res = config.res ?? ''
-	let locked_cells = []
 	const max_mem = config.max_mem ?? 0
-	const pause = config.pause ?? false
+	const pause = config.pause ?? false	
 
-	function movePtr(i) {
-		const diff = i - ptr
+	function movePtr(from, to) {
+		const diff = to - from
 		const sign = diff < 0 ? '<' : '>'
-		ptr = i
 		return sign.repeat(Math.abs(diff))
 	}
 
 	/**
-	 * @param {number} number
-	 * @returns {string}
+	 * @param {number} ascii
+	 * @param {string} env
+	 * @return [{string}, {number[]}, {number}]
 	 */
-	function loop(number) {
-		// Find the best place for the number
-		let [sign, diff, i] = mem.reduce((old, cell, i) => {
-			if (locked_cells.includes(i)) return old
+	function loop(ascii, env) {
+		let { mem, locks } = obj(env)
 
-			const foo = addOrSub(cell, number)
+		const optr = obj(env).ptr
+
+		// Find the best place for the number
+		let [sign, diff, ptr] = mem.reduce((old, cell, i) => {
+			if (locks.includes(i)) return old
+
+			const foo = addOrSub(cell, ascii)
 			return foo[1] < old[1] ? [...foo, i] : old
-		}, [null, 128])
+		}, [null, 128, null])
 
 		if (diff === 0)
-			return null
+			return []
 
-		locked_cells.push(i)
+		locks.push(ptr)
 
 		// Get the smallest factors of the ascii
-		//   Also prevent from primes
+		// also prevent from primes
 		let bestPair = closestFactors(diff)
 		let isPrime = false
 
@@ -123,139 +129,125 @@ export function * bfencoderv2(text, config = {}) {
 			isPrime = true
 		}
 
-		// Write the result
-		const o_mem = [...mem]
-		const o_ptr = ptr
-
-		const counter_code = single(bestPair[0])
-		const counter_i = ptr
+		// Make code
+		const nenv = str({ mem, ptr: optr, locks });
+		let counter_code, counter_ptr
+		[counter_code, mem, counter_ptr] = single(bestPair[0], nenv)
 
 		if (counter_code === null) {
-			locked_cells = locked_cells.filter(e => e !== i)
-			return null
+			locks = locks.filter(e => e !== ptr)
+			return []
 		}
 
-		const code = `
+		let code = `
 			${counter_code}
 			[
-				${movePtr(i)}         ${sign.repeat(bestPair[1])}
-				${movePtr(counter_i)} -
+				${movePtr(counter_ptr, ptr)} ${sign.repeat(bestPair[1])}
+				${movePtr(ptr, counter_ptr)} -
 			]
-			${movePtr(i)}
+			${movePtr(counter_ptr, ptr)}
 			${isPrime ? sign : ''}
 		`.replace(/\s+/g, '')
 
-		const code_ptr = ptr
-
-		locked_cells = locked_cells.filter(e => e !== i)
-
-		// Try variants
-		mem = o_mem; ptr = o_ptr
-
-		if (number % 10 !== 0) {
-			const [num, sign, reminder] = closerTen(number)
-			const foo = loop(num) + sign.repeat(reminder)
-
-			if (foo.length < code.length) {
-				mem[ptr] += sign === '+' ? reminder : -reminder
-				return foo
-			}
-
-			mem = o_mem; ptr = o_ptr
-		}
+		locks = locks.filter(e => e !== ptr)
 
 		// Update memory
-		mem[i] +=            sign === '+' ? diff : -diff
-		mem[i] += isPrime ? (sign === '-' ? -1 : 1) : 0
-		mem[counter_i] = 0
-		if (mem[i] > 127) mem[i] -= 128
-		if (mem[i] < 0)   mem[i] = 128 + mem[i]
+		mem[ptr] +=            sign === '+' ? diff : -diff
+		mem[ptr] += isPrime ? (sign === '-' ? -1 : 1) : 0
+		mem[counter_ptr] = 0
+		if (mem[ptr] > 127) mem[ptr] -= 128
+		if (mem[ptr] < 0)   mem[ptr] = 128 + mem[ptr]
 
-		ptr = code_ptr
+		if (ascii % 10 !== 0) {
+			const [base, sign, unit] = closerTen(ascii)
 
-		return code
+			const { mem: _mem, locks: _locks } = obj(env)
+			const nenv = str({ mem: _mem, ptr: optr, locks: _locks })
+
+			let [ncode, nmem, nptr] = loop(base, nenv)
+			ncode += sign.repeat(unit)
+
+			if (ncode.length < code.length) {
+				nmem[nptr] += sign === '+' ? unit : -unit;
+				[code, mem, ptr] = [ncode, nmem, nptr]
+			}
+		}
+
+		return [code, mem, ptr]
 	}
 
 	/**
-	 * @param {number} number
-	 * @returns {string}
+	 * @param {number} ascii
+	 * @param {string} env
+	 * @return [{string}, {number[]}, {number}]
 	 */
-	function single(number) {
-		let sign, diff, i
+	function single(ascii, env) {
+		const { locks } = obj(env)
+		let { mem, ptr } = obj(env)
+
+		const optr = ptr
+
+		let sign, diff
 
 		// Find the best place for the number
-		if (locked_cells.length < mem.length) {
-			[sign, diff, i] = mem.reduce((old, cell, i) => {
-				if (locked_cells.includes(i)) return old
+		if (locks.length < mem.length)
+			[sign, diff, ptr] = mem.reduce((old, cell, i) => {
+				if (locks.includes(i)) return old
 
-				const foo = addOrSub(cell, number)
+				const foo = addOrSub(cell, ascii)
 				return foo[1] < old[1] ? [...foo, i] : old
-			}, [null, 128])
-		}
+			}, [null, 128, null])
+
 		// If all cells are locked try creating one
 		else {
 			if (max_mem > 0 && mem.length === max_mem)
 				return null
 
-			i = mem.push(0) - 1;
-			[sign, diff] = addOrSub(0, number)
+			ptr = mem.push(0) - 1;
+			[sign, diff] = addOrSub(0, ascii)
 		}
 
 		// Make code
-		const o_mem = [...mem]
-		const o_ptr = ptr
-
-		let code = movePtr(i) + sign.repeat(diff)
-		let code_mem = [...mem]
-		let code_ptr = ptr
+		let code = movePtr(optr, ptr) + sign.repeat(diff)
 
 		// Update memory state
-		//   Use `128` to consider 0 on a byte-overflow
-		code_mem[i] = code_mem[i] + (sign === '+' ? diff : -diff)
-		if (code_mem[i] > 127) code_mem[i] -= 128
-		if (code_mem[i] < 0) code_mem[i] = 128 + code_mem[i]
-
-		let foo
-		mem = o_mem; ptr = o_ptr
+		// use `128` to consider 0 on a byte-overflow
+		mem[ptr] = mem[ptr] + (sign === '+' ? diff : -diff)
+		if (mem[ptr] > 127) mem[ptr] -= 128
+		if (mem[ptr] < 0)   mem[ptr] = 128 + mem[ptr]
 
 		// Test if the code would be smaller if created new cell
-		if (!mem.includes(0) && (max_mem === 0 || mem.length < max_mem)) {
-			mem.push(0)
+		{
+			const { mem: _mem, ptr: _ptr } = obj(env)
 
-			foo = single(number)
-			if (foo.length < code.length) {
-				code = foo
-				code_mem = [...mem]
-				code_ptr = ptr
+			if (!_mem.includes(0) && (max_mem === 0 || _mem.length < max_mem)) {
+				_mem.push(0)
+
+				const nenv = str({ mem: _mem, ptr: _ptr, locks })
+				const [ncode, nmem, nptr] = single(ascii, nenv)
+
+				if (ncode.length < code.length)
+					[code, mem, ptr] = [ncode, nmem, nptr]
 			}
-			mem = o_mem; ptr = o_ptr
 		}
 
 		// Test if `<[-]+++++++`-like would be smaller
-		// NOTE: Possibly not the fastest to interpretate
-		foo = `${movePtr(i)}[-]${'+'.repeat(number)}`
-		if (foo.length < code.length) {
-			code = foo
-			code_mem[i] = number
-			code_ptr = i
+		if (Math.abs(optr - ptr) + 3 + ascii < code.length) {
+			code = movePtr(optr, ptr) + '[-]' + '+'.repeat(ascii)
+
+			mem = obj(env).mem
+			mem[ptr] = ascii
 		}
-		mem = o_mem; ptr = o_ptr
 
 		// Test if `<[+]-------`-like would be smaller
-		// NOTE: Possibly not the fastest to interpretate
-		foo = `${movePtr(i)}[+]${'-'.repeat(128 - number)}`
-		if (foo.length < code.length) {
-			code = foo
-			code_mem[i] = number
-			code_ptr = i
+		if (Math.abs(optr - ptr) + 3 + (128 - ascii) < code.length) {
+			code = movePtr(optr, ptr) + '[+]' + '-'.repeat(128 - ascii)
+
+			mem = obj(env).mem
+			mem[ptr] = ascii
 		}
-		mem = o_mem; ptr = o_ptr
 
-		// Update memory state
-		mem = code_mem
-		ptr = code_ptr
-
-		return code
+		return [code, mem, ptr]
 	}
 
 	/**
@@ -266,17 +258,10 @@ export function * bfencoderv2(text, config = {}) {
 		const ascii = ch.charCodeAt(0)
 		if (ascii > 127) throw 'Unexpected ASCII character to be greater than 127'
 
-		// Choose loop or inperative
-		const o_mem = [...mem]
-		const o_ptr = ptr
+		const env = str({ mem, ptr, locks: [] })
 
-		const single_code = single(ascii)
-		const single_mem = [...mem], single_ptr = ptr
-		mem = o_mem; ptr = o_ptr
-
-		const loop_code = loop(ascii)
-		const loop_mem = [...mem], loop_ptr = ptr
-		mem = o_mem; ptr = o_ptr
+		const [single_code, single_mem, single_ptr] = single(ascii, env)
+		const [loop_code, loop_mem, loop_ptr] = loop(ascii, env)
 
 		if (loop_code?.length < single_code?.length) {
 			mem = loop_mem

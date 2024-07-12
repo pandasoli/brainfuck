@@ -54,12 +54,6 @@ It uses:
 > They aren't really needed as all the techniques  
 > already make the code as small as possible.
 
-> [!NOTE]
-> TODOS:
-> 1. In loops, 62 generates `>++[<------------------------------->-]<`  
->   which is bigger than `>++++++[<---------->-]<--` (loop for 60, and single for 2).  
->   Add check for if getting the base (the closest number divisible by 10) and getting single's is smaller.
-
 <br>
 
 ### AS Transpiler 🦬
