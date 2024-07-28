@@ -1,10 +1,37 @@
 /**
+ * @typedef {Object} Token
+ * @property {string} literal - Token's string representation
+ * @property {number} times - How many times token repeated
+ */
+
+/**
  * @param {string} code Brainfuck code
+ * @returns {Token[]} return Tokens
+ */
+function lex(code) {
+	const tokens = []
+
+	for (const ch of code) {
+		if (!'+-><.,![]'.includes(ch)) continue
+
+		if (tokens.length > 0 && tokens[tokens.length - 1].literal === ch)
+			tokens[tokens.length - 1].times++
+		else
+			tokens.push({ literal: ch, times: 1 })
+	}
+
+	return tokens
+}
+
+/**
+ * @param {string} code Brainfuck code
+ * @param {number} debug Debug level
  * @return {string} result GNU Assembly code
  */
-export function compile_bf(code) {
+export function compile_bf(code, debug = 0) {
 	let loops_count = 0
 	const loops_in = []
+	const tokens = lex(code)
 
 	let result = `.data
 	pointer: .long memory
@@ -20,90 +47,92 @@ _start:
 `
 
 	/*
+	 * @param {string} ch
 	 * @param {string} chunk
 	*/
-	const write = chunk =>
+	const write = (ch, chunk) => {
+		const first_line = line =>
+			debug == 1 ? `${line}    # ${ch}` :
+			debug == 2 ? `# ${ch}\n${line}` :
+			line
+
 		result += chunk
 			.split('\n')
-			.map(el => el.trim())
+			.map((el, i) =>
+				i === 1
+					? first_line(el.trim())
+					: el.trim())
+			.join('\n').split('\n') // split at \n first_line added
 			.filter(el => el) // remove blank lines
 			.map(el => '\t'.repeat(1 + loops_in.length) + el) // add identation
-			.join('\n') + '\n' + '\n'
+			.join('\n') + '\n'
 
-	for (let i = 0; i < code.length; i++) {
-		const ch = code[i]
+		if (debug === 2) result += '\n'
+	}
+
+	for (const token of tokens) {
+		const ch = token.literal
 
 		switch (ch) {
 			case '+':
-				// if this is the first plus in a sequence (the last char wasn't one),
-				// then write the necessary code to increment.
-				if (i == 0 || code[i - 1] != '+')
-					write(`
-						# +
-						movl pointer, %eax
-						movb (%eax), %bl`)
+				write(ch, `
+					movl pointer, %eax
+					movb (%eax), %bl
 
-				// write process
-				write('incb %bl')
+					addb $${token.times}, %bl
 
-				// if the next char is not a plus,
-				// store the result value into the memory.
-				if (i < code.length && code[i + 1] != '+')
-					write('mov %bl, (%eax)')
+					mov %bl, (%eax)`)
 				break
 
 			case '-':
-				if (i == 0 || code[i - 1] != '-')
-					write(`
-						# -
-						movl pointer, %eax
-						movb (%eax), %bl`)
+				write(ch, `
+					movl pointer, %eax
+					movb (%eax), %bl
 
-				write('decb %bl')
+					subb $${token.times}, %bl
 
-				if (i < code.length && code[i + 1] != '-')
-					write('mov %bl, (%eax)')
+					mov %bl, (%eax)`)
 				break
 
 			case '<':
-				write(`
-					# <
-					decb pointer`)
+				write(ch, `
+					movl pointer, %eax
+					subl $${token.times}, %eax
+					movl %eax, pointer`)
 				break
 
 			case '>':
-				write(`
-					# >
-					incb pointer`)
+				write(ch, `
+					movl pointer, %eax
+					addl $${token.times}, %eax
+					movl %eax, pointer`)
 				break
 
 			case '!':
-				write(`
-					# !
+				write(ch, `
 					mov $1, %eax
 					xor %ebx, %ebx
 					int $0x80`)
 				break
 
 			case '.':
-				write(`
-					# .
+				write(ch, `
 					movl pointer, %ecx
 
 					mov $4, %eax
 					mov $1, %ebx
 					mov $1, %edx
 					int $0x80`)
+
+				Array(token.times - 1).fill(null).forEach(() =>
+					write(ch, `
+						mov $4, %eax
+						int $0x80`)
+				)
 				break
 
 			case ',':
-				// if the next char also input in the same cell,
-				// there is no need to execute it
-				if (i < code.length && code[i + 1] == ',')
-					continue
-
-				write(`
-					# ,
+				write(ch, `
 					mov $3, %eax
 					mov $0, %ebx
 					movl $input, %ecx
@@ -123,16 +152,17 @@ _start:
 				curent cell is zero
 			*/
 			case '[':
-				write(`
-					# [
-					movl pointer, %eax
-					movb (%eax), %bl
+				Array(token.times).fill(null).forEach(() => {
+					write(ch, `
+						movl pointer, %eax
+						movb (%eax), %bl
 
-					test %bl, %bl
-					jz loop_${loops_count}_end
-					loop_${loops_count}_begin:`)
+						test %bl, %bl
+						jz loop_${loops_count}_end
+						loop_${loops_count}_begin:`)
 
-				loops_in.push(loops_count++)
+					loops_in.push(loops_count++)
+				})
 				break
 
 			/*
@@ -141,16 +171,17 @@ _start:
 				loop if the current cell is zero
 			*/
 			case ']':
-				const loop_n = loops_in.pop()
+				Array(token.times).fill(null).forEach(() => {
+					const loop_n = loops_in.pop()
 
-				write(`
-					# ]
-					movl pointer, %eax
-					movb (%eax), %bl
+					write(ch, `
+						movl pointer, %eax
+						movb (%eax), %bl
 
-					test %bl, %bl
-					jnz loop_${loop_n}_begin
-					loop_${loop_n}_end:`)
+						test %bl, %bl
+						jnz loop_${loop_n}_begin
+						loop_${loop_n}_end:`)
+				})
 		}
 	}
 
@@ -158,5 +189,5 @@ _start:
 }
 
 console.log(
-	compile_bf('>++++++++[<+++++++++>-]<.>++++[<+++++++>-]<+.>++++[<+++++>-]<.[-]+++[>+++++++++++<-]>.-.<+++++[>+++++++++<-]>.<++++[>+++++++++++<-]>.[-]++++[<++++++++>-]<.>++++++[<+++++++++++++>-]<.-------------.++++++++++++.--------.[-]++++[>++++++++<-]>.<++++++++[>+++++++++<-]>+.++++++++++.[-]++++[<++++++++>-]<.>++++++[<++++++>-]<+.>+++[<+++++++++++++>-]<.---.[-]++++[>++++++++<-]>.<++++++[>++++++++<-]>+++.<++++[>+++++++<-]>.---.---.[-]+++[<+++++++++++>-]<.')
+	compile_bf('>++++++++[<+++++++++>-]<.>++++[<+++++++>-]<+.>++++[<+++++>-]<.[-]+++[>+++++++++++<-]>.-.<+++++[>+++++++++<-]>.<++++[>+++++++++++<-]>.[-]++++[<++++++++>-]<.>++++++[<+++++++++++++>-]<.-------------.++++++++++++.--------.[-]++++[>++++++++<-]>.<++++++++[>+++++++++<-]>+.++++++++++.[-]++++[<++++++++>-]<.>++++++[<++++++>-]<+.>+++[<+++++++++++++>-]<.---.[-]++++[>++++++++<-]>.<++++++[>++++++++<-]>+++.<++++[>+++++++<-]>.---.---.[-]+++[<+++++++++++>-]<.', 2)
 )
