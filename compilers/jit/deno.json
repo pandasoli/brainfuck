@@ -1,0 +1,7 @@
+{
+	"tasks": {
+		"compile": "gcc -std=c99 -shared -o main.so main.c",
+		"run": "deno run --allow-ffi --unstable-ffi main.js",
+		"clean": "rm main.so"
+	}
+}

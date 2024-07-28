@@ -1,5 +1,4 @@
-import ffi from 'ffi-napi'
-import ref from 'ref-napi'
+import { Buffer } from 'node:buffer'
 
 const MEM_CAP = 255
 
@@ -271,18 +270,30 @@ function run(code) {
 	if (!bin) return
 
 	// Load the C library
-	const lib = ffi.Library('./main', {
-  	run: [ref.types.void, [ref.refType(ref.types.uint8), ref.types.uint, ref.types.int]]
-	})
+	const libSuffix =
+		Deno.build.os === 'windows' ? 'dll' :
+		Deno.build.os === 'darwin'  ? 'dylib' :
+		'so'
+	const libName = `./main.${libSuffix}`
+
+	const dylib = Deno.dlopen(
+		libName,
+		{
+			run: {
+				parameters: ['buffer', 'u32', 'i32'],
+				result: 'void'
+			}
+		}
+	)
 
 	// Allocate and initialize memory for the data in C
-	const buf = Buffer.alloc(bin.length)
+	const buf = new Uint8Array(bin.length)
 
 	for (let i = 0; i < bin.length; i++)
-		buf.writeUint8(bin[i], i)
+		buf[i] = bin[i]
 
 	// Call the C function
-	lib.run(buf, bin.length, MEM_CAP)
+	dylib.symbols.run(buf, bin.length, MEM_CAP)
 }
 
 run(`++++++++
