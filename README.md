@@ -69,12 +69,12 @@ deno task link && \      # link prog.o to prog
 deno task run            # run prog
 ```
 
-> [!WARN]
+> [!WARNING]
 > The byte-size this implementation works with is 0-255 (not 0-127 as the others).  
 > It was made to keep the code smaller and easier to read.  
 > And it means generated code by [#encoderv2](#encoder-v2-) cannot be ran with this.
 
-> [!INFO]
+> [!NOTE]
 > TODOS:
 > - Let next operators know what's inside registers
 >   not to re-set it to the same thing.
@@ -87,7 +87,7 @@ deno task run            # run prog
 
 It compiles **Brainfuck** to a valid ELF64 format entirely in **JavaScript**, and runs it with a **C** shared library.
 
-> [!WARN]
+> [!WARNING]
 > Just like [#as-transpiler](#as-transpiler-), it works with 0-255 byte-size, so be careful.
 
 <br>
