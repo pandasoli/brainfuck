@@ -29,7 +29,7 @@ class ErrorManager {
 
 		let code = (
 			this.code.substring(0, offset) +
-			'\x1b[58;2;191;97;106;4:3m' + this.code[offset] + '\x1b[0m' +
+			'\x1b[58;5;1;4:3m' + this.code[offset] + '\x1b[m' +
 			this.code.substring(offset + 1, this.code.length)
 		).split('\n')
 
@@ -52,27 +52,13 @@ function parse(code) {
 
 	for (let i = 0; i < code.length; i++) {
 		const kind = code[i]
+		
+		if (!'+-<>.,![]'.includes(kind)) continue
 
-		switch (kind) {
-			case '+':
-			case '-':
-			case '[':
-			case ']':
-			case '<':
-			case '>':
-			case '.':
-			case ',':
-			case '!':
-				if (ops.length == 0)
-					ops.push({ kind, times: 0, offset: i })
-
-				const last_op = ops[ops.length - 1]
-
-				if (last_op.kind != kind)
-					ops.push({ kind, times: 1, offset: i })
-				else
-					last_op.times++
-		}
+		if (ops.length > 0 && ops[ops.length - 1].kind === kind)
+			ops[ops.length - 1].times++
+		else
+			ops.push({ kind, times: 1, offset: i })
 	}
 
 	return ops
