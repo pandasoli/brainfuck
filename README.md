@@ -63,17 +63,20 @@ Its output can be redirected to a `.s` file, compiled with GNU Assembly,
 and then ran sending the output to `xxd` to show the result in hex.
 
 ```bash
-node main.js > prog.s
-./comp.sh prog && ./prog | xxd
+deno task transpile && \ # send the output of main.js to prog.s
+deno task compile && \   # compile prog.s to prog.o
+deno task link && \      # link prog.o to prog
+deno task run            # run prog
 ```
 
+> [!WARN]
+> The byte-size this implementation works with is 0-255 (not 0-127 as the others).  
+> It was made to keep the code smaller and easier to read.  
+> And it means generated code by [#encoderv2](#encoder-v2-) cannot be ran with this.
+
 <br>
 
-❗ Different from [#interpreter](#interpreter-%F0%9F%90%8D) this works with [ASCII](https://ascii-code.com) (0-127), not UTF-16 ([`fromCharCode`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCharCode)). Each memory cell is 1 byte!
-
-<br>
-
-### JIT Compiler 😂
+### JIT Compiler 🐱
 > [`compilers/jit`](compilers/jit)  
 > Inspired by: [tsoding/bfjit](https://github.com/tsoding/bfjit)
 
