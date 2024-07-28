@@ -74,6 +74,11 @@ deno task run            # run prog
 > It was made to keep the code smaller and easier to read.  
 > And it means generated code by [#encoderv2](#encoder-v2-) cannot be ran with this.
 
+> [!INFO]
+> TODOS:
+> - Let next operators know what's inside registers
+>   not to re-set it to the same thing.
+
 <br>
 
 ### JIT Compiler 🐱
@@ -82,7 +87,8 @@ deno task run            # run prog
 
 It compiles **Brainfuck** to a valid ELF64 format entirely in **JavaScript**, and runs it with a **C** shared library.
 
-Just like [#as-transpiler](#as-transpiler-%F0%9F%A6%AC), it works with ASCII, so be careful.
+> [!WARN]
+> Just like [#as-transpiler](#as-transpiler-), it works with 0-255 byte-size, so be careful.
 
 <br>
 
