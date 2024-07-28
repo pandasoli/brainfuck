@@ -1,9 +1,7 @@
-import { Buffer } from 'node:buffer'
-
 const MEM_CAP = 255
 
 /**
- * @typedef {Object} Op
+ * @typedef {Object} Token
  * @property {number} offset
  * @property {string} kind
  * @property {number} times
@@ -12,8 +10,8 @@ const MEM_CAP = 255
 
 /**
  * @typedef {Object} Backpatch
- * @property {number} loop_start
- * @property {number} loop_end
+ * @property {number} start
+ * @property {number} end
  */
 
 class ErrorManager {
@@ -45,10 +43,10 @@ class ErrorManager {
 
 /**
  * @param {string} code
- * @returns {Op[]}
+ * @returns {Token[]}
  */
 function parse(code) {
-	/** @type {Op[]} */ const ops = []
+	/** @type {Token[]} */ const ops = []
 
 	for (let i = 0; i < code.length; i++) {
 		const kind = code[i]
@@ -59,199 +57,309 @@ function parse(code) {
 			ops[ops.length - 1].times++
 		else
 			ops.push({ kind, times: 1, offset: i })
+
+		ops.times &= 0xFF
 	}
 
 	return ops
 }
 
+const int32ToBytes = num => {
+	const bytes = []
+
+	for (let i = 0; i < 4; i++) {
+		bytes.push(num & 0xFF) // Get the least significant byte
+		num >>= 8              // Shift 8 bits to the right
+	}
+
+	return bytes.reverse()
+}
+
+const bytesToHexString = bytes =>
+	bytes.map(n => n
+		.toString(16)
+		.toUpperCase()
+		.padStart(2, '0')
+	)
+
+const assemble = (op, args) => {
+	switch (op) {
+		case 'add':
+			switch (args[0]) {
+				case '[rdi]': return ['80', '07', args[1]]
+				case 'rdi': {
+					const num = parseInt(args[1], 16)
+					const hexTimes = bytesToHexString(int32ToBytes(num)).reverse()
+					return ['48', '81', 'C7', ...hexTimes]
+				}
+
+				default:
+					console.error(`Unimplemented! add for ${args}`)
+			}
+			return []
+
+		case 'sub':
+			switch (args[0]) {
+				case '[rdi]': return ['80', '2F', args[1]]
+				case 'rdi': {
+					const num = parseInt(args[1], 16)
+					const hexTimes = bytesToHexString(int32ToBytes(num)).reverse()
+					return ['48', '81', 'EF', ...hexTimes]
+				}
+
+				default:
+					console.error(`Unimplemented! sub for ${args}`)
+			}
+			return []
+
+		case 'mov':
+			switch (args[0]) {
+				case 'al':
+					if (args[1] === '[rdi]')
+						return ['8A', '07']
+					else
+						console.error('Unimplemented!')
+					return []
+
+				case 'rax': {
+					const num = parseInt(args[1], 16)
+					const hexNum = bytesToHexString(int32ToBytes(num)).reverse()
+					return ['48', 'C7', 'C0', ...hexNum]
+				}
+
+				case 'rdi': {
+					const num = parseInt(args[1], 16)
+					const hexNum = bytesToHexString(int32ToBytes(num)).reverse()
+					return ['48', 'C7', 'C7', ...hexNum]
+				}
+
+				case 'rsi':
+					if (args[1] === 'rdi')
+						return ['48', '89', 'FE']
+					else
+						console.error('Unimplemented!')
+					return []
+
+				case 'rdx': {
+					const num = parseInt(args[1], 16)
+					const hexNum = bytesToHexString(int32ToBytes(num)).reverse()
+					return ['48', 'C7', 'C2', ...hexNum]
+				}
+
+				default:
+					console.error(`Unimplemented! mov for ${args}`)
+			}
+			return []
+
+		case 'push':
+			switch (args[0]) {
+				case 'rdi': return ['57']
+
+				default:
+					console.error('Unimplemented!')
+			}
+			return []
+
+		case 'pop':
+			switch (args[0]) {
+				case 'rdi': return ['5F']
+
+				default:
+					console.error('Unimplemented!')
+			}
+			return []
+
+		case 'test':
+			if (args[0] === 'al' && args[1] === 'al')
+				return ['84', 'C0']
+			else
+				console.error('Unimplemented!')
+			return []
+
+		case 'jz': {
+			const addr = parseInt(args[0], 16)
+			const hexAddr = bytesToHexString(int32ToBytes(addr)).reverse()
+			return ['0F', '84', ...hexAddr]
+		}
+
+		case 'jnz': {
+			const addr = parseInt(args[0], 16)
+			const hexAddr = bytesToHexString(int32ToBytes(addr)).reverse()
+			return ['0F', '85', ...hexAddr]
+		}
+
+		case 'ret': return ['C3']
+		case 'syscall': return ['0F', '05']
+
+		default:
+			console.error('Unimplemented!')
+	}
+
+	return []
+}
+
+
 /**
- * @param {Op[]} ops
+ * @param {Token[]} tokens
  * @param {ErrorManager} err
  * @returns {Uint8Array}
  */
-function compile(ops, err) {
-	/** @type {number[]}    */ let code = []
-	/** @type {number}      */ let mem_index = 0
+function compile(tokens, err) {
+	/** @type {number[]}    */ let result = []
+	/** @type {number}      */ let pointer = 0
 	/** @type {number[]}    */ const loops_start = []
 	/** @type {Backpatch[]} */ const backpatches = []
+	
+	const write = code => {
+		const lines = code
+			.split('\n')
+			.map(e => e.trim())
+			.filter(e => e)
 
-	const int32ToBytes = num => {
-  	const bytes = []
+		for (const line of lines) {
+			const op = line.split(' ')[0]
+			const args = line
+				.substring(op.length)
+				.split(',')
+				.map(e => e.trim())
+				.filter(e => e)
 
-	  for (let i = 0; i < 4; i++) {
-  	  bytes.push(num & 0xFF) // Get the least significant byte
-    	num >>= 8              // Shift 8 bits to the right
-	  }
+			const code = assemble(op, args)
+				.map(e => parseInt(e, 16))
 
-	  return bytes.reverse()
+			result = [...result, ...code]
+		}
 	}
 
-	const bytesToHexString = bytes =>
-  	bytes.map(n => n
-			.toString(16)
-			.toUpperCase()
-			.padStart(2, '0')
-		)
 
-
-	for (const op of ops) {
-		/** @type {string[]} */
-		let bytes = []
-
-		switch (op.kind) {
+	for (const token of tokens) {
+		switch (token.kind) {
 			case '+': {
-				const times = op.times & 0xFF
-				const times_hex = bytesToHexString([times])[0]
-
-				bytes = [
-					// add byte [rdi], <uint8>
-					'80', '07', times_hex 
-				]
+				const times = bytesToHexString([token.times])[0]
+				write(`add [rdi], ${times}`)
 			} break
 
 			case '-': {
-				const times = op.times & 0xFF
-				const times_hex = bytesToHexString([times])[0]
-
-				bytes = [
-					// sub byte [rdi], <uint8>
-					'80', '2F', times_hex
-				]
+				const times = bytesToHexString([token.times])[0]
+				write(`sub [rdi], ${times}`)
 			} break
 
 			case '[':
-				for (const _ of Array(op.times)) {
-					bytes = [
-						...bytes,
-						'8A', '07',                        // mov al, byte [rdi]
-						'84', 'C0',                        // test al, al
-						'0F', '84', '00', '00', '00', '00' // jz 0
-					]
+				for (const _ of Array(token.times)) {
+					write(`
+						mov al, [rdi]
+						test al, al
+						jz 0`)
 
-					const addr = code.length + bytes.length
+					const addr = result.length
 					loops_start.push(addr)
 				}
 				break
 
 			case ']':
-				for (const i of Array(op.times)) {
+				for (const i of Array(token.times)) {
 					if (loops_start.length == 0) {
 						err.error(op.offset + i, 'Cannot finish unstarted loop!')
 						return
 					}
 
-					bytes = [
-						...bytes,
-						'8A', '07',                        // mov al, byte [rdi]
-						'84', 'C0',                        // test al, al
-						'0F', '85', '00', '00', '00', '00' // jnz 0
-					]
+					write(`
+						mov al, [rdi]
+						test al, al
+						jnz 0`)
 
 					backpatches.push({
-						loop_start: loops_start.pop(),
-						loop_end: code.length + bytes.length
+						start: loops_start.pop(),
+						end: result.length
 					})
 				}
 				break
 
-			case '<':
-				bytes = [
-					// sub rdi, <int32>
-					'48', '81', 'EF', ...bytesToHexString(int32ToBytes(op.times)).reverse()
-				]
+			case '<': {
+				write(`sub rdi, ${token.times}`)
 
-				if (mem_index > 0)
-					mem_index--
+				if (pointer > 0)
+					pointer--
 				else {
 					err.error(op.offset, 'Memory index cannot be less than 0!')
 					return
 				}
-				break
+			} break
 
-			case '>':
-				bytes = [
-					// add rdi, <int32>
-					'48', '81', 'C7', ...bytesToHexString(int32ToBytes(op.times)).reverse()
-				]
+			case '>': {
+				write(`add rdi, ${token.times}`)
 
-				if (mem_index < MEM_CAP)
-					mem_index++
+				if (pointer < MEM_CAP)
+					pointer++
 				else {
 					console.error(op.offset, 'Memory index cannot be bigger than memory capacity!')
 					return
 				}
-				break
+			} break
 
 			case '.':
-				for (const _ of Array(op.times))
-					bytes = [
-						...bytes,
-						'57',                                     // push rdi
-						'48', 'C7', 'C0', '01', '00', '00', '00', // mov rax, SYS_write   ; op
-						'48', '89', 'FE',                         // mov rsi, rdi         ; buf
-						'48', 'C7', 'C7', '01', '00', '00', '00', // mov rdi, SYS_stdout  ; fd
-						'48', 'C7', 'C2', '01', '00', '00', '00', // mov rdx, 1           ; length
-						'0F', '05',                               // syscall
-						'5F'                                      // pop rdi
-					]
+				for (const _ of Array(token.times))
+					write(`
+						push rdi
+						mov rax, 1
+						mov rsi, rdi
+						mov rdi, 1
+						mov rdx, 1
+						syscall
+						pop rdi`)
 				break
 
 			case ',':
-				for (const _ of Array(op.times))
-					bytes = [
-						...bytes,
-						'57',                                     // push rdi
-						'48', 'C7', 'C0', '00', '00', '00', '00', // mov rax, SYS_read   ; op
-						'48', '89', 'FE',                         // mov rsi, rdi        ; buf
-						'48', 'C7', 'C7', '00', '00', '00', '00', // mov rdi, SYS_stdin  ; fd
-						'48', 'C7', 'C2', '01', '00', '00', '00', // mov rdx, 1          ; length
-						'0F', '05',                               // syscall
-						'5F'                                      // pop rdi
-					]
+				for (const _ of Array(token.times))
+					write(`
+						push rdi
+						mov rax, 0
+						mov rsi, rdi
+						mov rdi, 0
+						mov rdx, 1
+						syscall
+						pop rdi`)
 				break
 
 			case '!':
-				bytes.push('C3') // ret
+				write(`ret`)
 		}
-
-		for (const byte of bytes)
-			code.push(parseInt(byte, 16))
 	}
 
 	/* Add finish program instruction */
-	code.push(parseInt('C3', 16)) // ret
+	write(`ret`)
 
 	/* Resolve loop start instructions */
 	for (const backpatch of backpatches) {
 		// Backpatch start
 		{
-			const left = code.slice(0, backpatch.loop_start - 4)
-			const right = code.slice(backpatch.loop_start, code.length)
+			const left = result.slice(0, backpatch.start - 4)
+			const right = result.slice(backpatch.start, result.length)
 
-			const end = backpatch.loop_end - backpatch.loop_start
-			const end_i32 = int32ToBytes(end).reverse()
+			const addr = backpatch.end - backpatch.start
+			const addr_i32 = int32ToBytes(addr).reverse()
 
-			code = [...left, ...end_i32, ...right]
+			result = [...left, ...addr_i32, ...right]
 		}
 
 		// Backpatch end
 		{
-			const left = code.slice(0, backpatch.loop_end - 4)
-			const right = code.slice(backpatch.loop_end, code.length)
+			const left = result.slice(0, backpatch.end - 4)
+			const right = result.slice(backpatch.end, result.length)
 
-			const start = -1 * (backpatch.loop_end - backpatch.loop_start)
-			const start_i32 = int32ToBytes(start).reverse()
+			const addr = -1 * (backpatch.end - backpatch.start)
+			const addr_i32 = int32ToBytes(addr).reverse()
 
-			code = [...left, ...start_i32, ...right]
+			result = [...left, ...addr_i32, ...right]
 		}
 	}
 
-	return new Uint8Array(code)
+	return new Uint8Array(result)
 }
 
 function run(code) {
-	const ops = parse(code)
-	const bin = compile(ops, new ErrorManager(code))
+	const tokens = parse(code)
+	const bin = compile(tokens, new ErrorManager(code))
 
 	if (!bin) return
 
