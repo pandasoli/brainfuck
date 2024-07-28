@@ -1,0 +1,9 @@
+{
+	"tasks": {
+		"transpile": "deno run main.js > prog.s",
+		"compile": "as --32 -g -o prog.o prog.s",
+		"link": "ld -m elf_i386 -o prog prog.o",
+		"run": "./prog",
+		"debug": "gdb ./prog"
+	}
+}
