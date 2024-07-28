@@ -66,14 +66,19 @@ stop:
 
 _start:
 	# program
-	loop_0:
+	movl pointer, %eax
+	movb (%eax), %bl
+	test %bl, %bl
+	jz loop_0_end
+	loop_0_begin:
 		call minus
 		call print
 
 		movl pointer, %eax
 		movb (%eax), %bl
-		cmpb $0, %bl
-		jne loop_0
+		test %bl, %bl
+		jnz loop_0_begin
+		loop_0_end:
 
 	# exit program
 	call stop
