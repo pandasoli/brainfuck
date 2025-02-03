@@ -27,32 +27,24 @@ It translates text to Brainfuck.
 
 ### Encoder v2 ⛱️
 > [`encoders/encoderv2.js`](encoders/encoderv2.js)  
-> Same configuration as [#interpreter 🐍](#interpreter-)
 
 A really smart encoder that writes code with the same techniques
-I myself use when I manually writing **Brainf#ck**.
+I myself use when I'm manually writing **Brainf#ck**.
 
 It chooses the smallest result from many techniques to get to the number
 on the memory with less code as possible.
 
-It uses:
-- Search for the cell with the closest number to the number I want,
-	so we can have less instructions than we would need starting from zero.
-- `><[-]+++++++` and `><[+]-------`  
-	This technique is used when the smallest way to get to the number is starting from zero.
-- Try creating a new cell to see if the code gets smaller.
-- Loops
-	- In loops we lock the chosen cell (1st technique) so
-		that the counter code doesn't choose it.
-	- We choose the smallest factors of the number
+Techniques:
+- Increment or decrement
+- Find the best cell and increment or decrement
+- Create a new cell and increment or decrement
+- Set cell to zero and increment or decrement
+- Loop
+	> Uses one technique in the counter code
 
-> [!NOTE]
-> Limitations:
-> - No support for loops inside loops
-> - No support for loop counter to contain a loop
->
-> They aren't really needed as all the techniques  
-> already make the code as small as possible.
+Limitations:
+- No support for loops inside loops
+- Doesn't preview next characters
 
 <br>
 
