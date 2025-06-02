@@ -1,3 +1,5 @@
+import { dlopen } from 'bun:ffi'
+
 import { compile } from './compiler.js'
 import { transpile } from './transpiler.js'
 
@@ -11,18 +13,15 @@ export const run = bf => {
 	if (!bin) return
 
 	// Load the C library
-	const libSuffix =
-		Deno.build.os === 'windows' ? 'dll' :
-		Deno.build.os === 'darwin'  ? 'dylib' :
-		'so'
-	const libName = `./main.${libSuffix}`
+	const path = './main.so'
 
-	const dylib = Deno.dlopen(
-		libName,
+	// const dylib = Deno.dlopen(
+	const dylib = dlopen(
+		path,
 		{
 			run: {
-				parameters: ['buffer', 'u32', 'i32'],
-				result: 'void'
+				args: ['buffer', 'u32', 'i32'],
+				returns: 'void'
 			}
 		}
 	)

@@ -1,9 +1,10 @@
 {
-	"tasks": {
+	"scripts": {
 		"compile": "as -g -o code.o code.s",
 		"link": "ld -o code code.o",
 
 		"shared": "gcc -std=c99 -shared -o main.so main.c",
-		"run": "deno run --allow-ffi --unstable-ffi jit.js"
+		"run:deno": "deno run --allow-ffi --unstable-ffi jit.js",
+		"run:bun": "bun run jit.js"
 	}
 }
